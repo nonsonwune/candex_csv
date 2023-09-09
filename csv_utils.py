@@ -1,8 +1,11 @@
 # csv_utils.py
 import csv
 from config import OUTPUT_CSV, CSV_FILENAME
+import os
 
 def initialize_output_csv():
+    if not os.path.exists('output'):
+        os.makedirs('output')
     with open(OUTPUT_CSV, 'w', newline='') as outfile:
         fieldnames = ['Registration Number', 'Full Name', 'Gender', 'GSM Number', 'Email', 'Score', 'Institution', 'Course', 'LGA', 'State']
         writer = csv.DictWriter(outfile, fieldnames=fieldnames)
