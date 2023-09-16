@@ -1,13 +1,15 @@
 # main.py
 from multiprocessing import Process, Manager, Lock
-import re
-import logging
 from collections import OrderedDict
 from webdriver_utils import initialize_and_setup_webdriver, search_candidate
 from csv_utils import initialize_output_csv, read_input_csv, write_to_output_csv
+import logging
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, NoSuchWindowException
-from selenium.webdriver.common.by import By
+import re
+from selenium.webdriver.common.by import By 
 from config import BROWSER_WINDOW, DATA_CLASS
+
+logging.getLogger().info("Initializing main.py")
 
 logging.basicConfig(filename='app.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logging.info("Initializing main.py")
@@ -105,11 +107,8 @@ def search_and_extract_in_tab(work_chunk, total_count, browser_count, processed_
 
 def main():
     logging.info("Main function started.")
-    print("Initializing...")
-
     initialize_output_csv()
     registration_numbers = read_input_csv()
-
     work_chunks = [registration_numbers[i::BROWSER_WINDOW] for i in range(BROWSER_WINDOW)]
     total_count = len(registration_numbers)
 
@@ -131,10 +130,7 @@ def main():
         if reg_num in sorted_output:
             write_to_output_csv(sorted_output[reg_num], output_lock)
 
-    print("Processing complete.")
     logging.info("Main function completed.")
-
-logging.info("main.py initialized")
 
 if __name__ == '__main__':
     main()

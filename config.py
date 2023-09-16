@@ -4,18 +4,16 @@ import logging
 from dotenv import load_dotenv
 from datetime import datetime
 
-logging.basicConfig(filename='app.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# Set up logging
+logging.basicConfig(filename='app.log', level=logging.INFO)
 logging.info("Initializing config.py")
 
-# Initialize environment variables for login
+# Load environment variables
 load_dotenv()
-USERNAME = os.getenv('USERNAME')
-PASSWORD = os.getenv('PASSWORD')
-
-now = datetime.now()
-output_time = now.strftime("%Y%m%d%H%M%S") + str(now.microsecond)[:6]
 
 # Constants
+USERNAME = os.getenv('USERNAME')
+PASSWORD = os.getenv('PASSWORD')
 CHROMEDRIVER_PATH = "chromedriver-mac-x64/chromedriver"
 LOGIN_URL = 'https://efacility.jamb.gov.ng/Signin'
 USERNAME_FIELD = 'UserName'
@@ -27,7 +25,7 @@ REG_FIELD_NAME = 'ctl00$MainContent$txtRegNumber'
 DATA_CLASS = 'col-md-8'
 DATA_TABLE = 'table'
 CSV_FILENAME = 'input/foreign 2.csv'
-OUTPUT_CSV = f'output/{CSV_FILENAME.split("/")[-1].split(".")[0]}_output{output_time}.csv'
+OUTPUT_CSV = f'output/{CSV_FILENAME.split("/")[-1].split(".")[0]}_{datetime.now().strftime("%Y%m%d%H%M%S")}.csv'
 BROWSER_WINDOW = 7
 
 logging.info("config.py initialized")
