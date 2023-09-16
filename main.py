@@ -1,6 +1,7 @@
 # main.py
 from multiprocessing import Process, Manager, Lock
 import re
+import logging
 from collections import OrderedDict
 from webdriver_utils import initialize_and_setup_webdriver, search_candidate
 from csv_utils import initialize_output_csv, read_input_csv, write_to_output_csv
@@ -8,11 +9,15 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException,
 from selenium.webdriver.common.by import By
 from config import BROWSER_WINDOW, DATA_CLASS
 
+logging.basicConfig(filename='app.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.info("Initializing main.py")
+
 processed_count = 0
 output_lock = Lock()
 sorted_output = OrderedDict()
 
 def no_record_dict(reg_num):
+    logging.info(f"Creating no_record_dict for {reg_num}")
     return OrderedDict([
         ('Registration Number', reg_num),
         ('Full Name', 'No Record Found'),
@@ -27,6 +32,7 @@ def no_record_dict(reg_num):
     ])
 
 def get_candidate_info(driver, reg_num):
+    logging.info(f"Getting candidate info for {reg_num}")
     try:
         element = driver.find_element(By.CLASS_NAME, DATA_CLASS)
         element_innerHTML = element.get_attribute('innerHTML')
@@ -60,6 +66,7 @@ def get_candidate_info(driver, reg_num):
     except NoSuchElementException:
         course, institution = "No Record Found", "No Record Found"
 
+    logging.info(f"Got candidate info for {reg_num}")
     return OrderedDict([
         ('Registration Number', reg_num),
         ('Full Name', full_name),
@@ -74,6 +81,7 @@ def get_candidate_info(driver, reg_num):
     ])
 
 def search_and_extract_in_tab(work_chunk, total_count, browser_count, processed_count, sorted_output, output_lock):
+    logging.info(f"Starting search_and_extract_in_tab for browser {browser_count}")
     try:
         driver, wait = initialize_and_setup_webdriver(browser_count, BROWSER_WINDOW)
     except Exception as e:
@@ -93,8 +101,10 @@ def search_and_extract_in_tab(work_chunk, total_count, browser_count, processed_
             with output_lock:
                 sorted_output[reg_num] = no_record_dict(reg_num)
             print(f"Error processing {reg_num}: {e}")
+    logging.info(f"Completed search_and_extract_in_tab for browser {browser_count}")
 
 def main():
+    logging.info("Main function started.")
     print("Initializing...")
 
     initialize_output_csv()
@@ -122,6 +132,9 @@ def main():
             write_to_output_csv(sorted_output[reg_num], output_lock)
 
     print("Processing complete.")
+    logging.info("Main function completed.")
+
+logging.info("main.py initialized")
 
 if __name__ == '__main__':
     main()

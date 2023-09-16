@@ -1,7 +1,11 @@
 # config.py
 import os
+import logging
 from dotenv import load_dotenv
 from datetime import datetime
+
+logging.basicConfig(filename='app.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.info("Initializing config.py")
 
 # Initialize environment variables for login
 load_dotenv()
@@ -25,3 +29,5 @@ DATA_TABLE = 'table'
 CSV_FILENAME = 'input/foreign 2.csv'
 OUTPUT_CSV = f'output/{CSV_FILENAME.split("/")[-1].split(".")[0]}_output{output_time}.csv'
 BROWSER_WINDOW = 7
+
+logging.info("config.py initialized")
