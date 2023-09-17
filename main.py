@@ -1,13 +1,16 @@
 # main.py
 from multiprocessing import Process, Manager, Lock
-import re
-import logging
 from collections import OrderedDict
 from webdriver_utils import initialize_and_setup_webdriver, search_candidate
 from csv_utils import initialize_output_csv, read_input_csv, write_to_output_csv
+import logging
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, NoSuchWindowException
-from selenium.webdriver.common.by import By
-from config import BROWSER_WINDOW, DATA_CLASS
+import re
+from selenium.webdriver.common.by import By 
+from config import BROWSER_WINDOW, DATA_CLASS, OUTPUT_CSV
+import csv
+
+logging.getLogger().info("Initializing main.py")
 
 logging.basicConfig(filename='app.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logging.info("Initializing main.py")
@@ -80,7 +83,14 @@ def get_candidate_info(driver, reg_num):
         ('State', state)
     ])
 
-def search_and_extract_in_tab(work_chunk, total_count, browser_count, processed_count, sorted_output, output_lock):
+def write_immediately(candidate_info, output_lock):
+    with output_lock:
+        with open(OUTPUT_CSV, 'a', newline='') as outfile:
+            fieldnames = ['Registration Number', 'Full Name', 'Gender', 'GSM Number', 'Email', 'Score', 'Institution', 'Course', 'LGA', 'State']
+            writer = csv.DictWriter(outfile, fieldnames=fieldnames)
+            writer.writerow(candidate_info)
+
+def search_and_extract_in_tab(work_chunk, total_count, browser_count, mgr_processed_count, output_lock):
     logging.info(f"Starting search_and_extract_in_tab for browser {browser_count}")
     try:
         driver, wait = initialize_and_setup_webdriver(browser_count, BROWSER_WINDOW)
@@ -93,48 +103,37 @@ def search_and_extract_in_tab(work_chunk, total_count, browser_count, processed_
             search_candidate(driver, wait, reg_num)
             candidate_info = get_candidate_info(driver, reg_num)
             if candidate_info:
-                with output_lock:
-                    sorted_output[reg_num] = candidate_info
-                    processed_count.value += 1
-                print(f"{processed_count.value}/{total_count} processed")
+                write_immediately(candidate_info, output_lock)
+                mgr_processed_count.value += 1  # Change here
+                print(f"{mgr_processed_count.value}/{total_count} processed")
         except (NoSuchElementException, TimeoutException, NoSuchWindowException) as e:
-            with output_lock:
-                sorted_output[reg_num] = no_record_dict(reg_num)
+            no_record = no_record_dict(reg_num)
+            write_immediately(no_record, output_lock)
             print(f"Error processing {reg_num}: {e}")
     logging.info(f"Completed search_and_extract_in_tab for browser {browser_count}")
 
 def main():
     logging.info("Main function started.")
-    print("Initializing...")
-
     initialize_output_csv()
     registration_numbers = read_input_csv()
-
     work_chunks = [registration_numbers[i::BROWSER_WINDOW] for i in range(BROWSER_WINDOW)]
     total_count = len(registration_numbers)
 
     manager = Manager()
-    processed_count = manager.Value('i', 0)
+    mgr_processed_count = manager.Value('i', 0)
     sorted_output = manager.dict()
     output_lock = Lock()
 
     processes = []
     for i, work_chunk in enumerate(work_chunks):
-        process = Process(target=search_and_extract_in_tab, args=(work_chunk, total_count, i + 1, processed_count, sorted_output, output_lock))
+        process = Process(target=search_and_extract_in_tab, args=(work_chunk, total_count, i + 1, mgr_processed_count, output_lock))
         processes.append(process)
         process.start()
 
     for process in processes:
         process.join()
 
-    for reg_num in registration_numbers:
-        if reg_num in sorted_output:
-            write_to_output_csv(sorted_output[reg_num], output_lock)
-
-    print("Processing complete.")
     logging.info("Main function completed.")
-
-logging.info("main.py initialized")
 
 if __name__ == '__main__':
     main()
