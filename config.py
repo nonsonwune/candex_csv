@@ -24,8 +24,8 @@ SEARCH_DATA = 'Search Data'
 REG_FIELD_NAME = 'ctl00$MainContent$txtRegNumber'
 DATA_CLASS = 'col-md-8'
 DATA_TABLE = 'table'
-CSV_FILENAME = 'input/reg_num2k.csv'
+CSV_FILENAME = 'input/sample9.csv'
 OUTPUT_CSV = f'output/{os.path.basename(CSV_FILENAME).split(".")[0]}_outputfile.csv'
-BROWSER_WINDOW = 10
+BROWSER_WINDOW = 3
 
 logging.info("config.py initialized")
